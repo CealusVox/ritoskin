@@ -26,9 +26,9 @@
 #include <regex>
 // https://github.com/nlohmann/json
 #include "../resources/json.hpp"
-using json = nlohmann::json;
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 void process_champion_folder(const fs::path& champion_folder);
 void process_bin_file(const fs::path& bin_file_path, const fs::path& output_folder, const std::string& champion_name, int skin_number);
