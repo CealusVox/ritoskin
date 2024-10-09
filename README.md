@@ -1,7 +1,7 @@
-# RitoSkin - a way of custom skin hack for League of Legends
-- At this point, the source code is not available, only the compiled version of the project.
-- Release version will contain all files necessary for the project to work;
-- If you are cloning the repo, make sure you add `bin` folder into `resources`;
+# RitoSkin - A Tool for Custom Skins in League of Legends
+- Some of the source code is now available in the `dev` folder.
+- The release version will include all necessary files for the project to function correctly.
+- If you're cloning the repository, please ensure that you add the `bin` folder to the `resources` directory.
 
 ## Table of Contents
 - [Preface](#preface)
@@ -15,26 +15,27 @@
 - [Contact](#contact)
 
 ## Preface
-- Please read the entire README file before using the project.
-- Pull requests are welcome and highly appreciated.
-- If you have any questions, feel free to contact me.
+- Please ensure you read the entire README before using this project.
+- Contributions through pull requests are welcome and highly appreciated.
+- If you have any questions or concerns about the project, feel free to contact me.
 
 ## Purpose
-- Custom skins exist, and skin hacks exist.
-- Custom skins are allowed in the game, but skin hacks are not permitted.
-- Some individuals charge money for creating custom skins or even sell skin hacks on the black market.
-- Riot Games, please make a decision. Either allow people to use your skins for free or find a way to stop this hobby. Custom-made artist skins can cost $300, while you charge $200 for a chroma skin.
+- Custom skins and skin hacks are prevalent in the community.
+- While custom skins are permitted by Riot Games, skin hacks are strictly prohibited.
+- Unfortunately, some individuals exploit this by charging for custom skins or selling unauthorized skin hacks on the black market.
+- Riot Games should either allow free access to official skins or take stronger measures to prevent unauthorized use.
+- Custom artist-made skins can cost up to $300, while official chroma skins may be priced around $200, raising questions of fairness and accessibility.
 
 ## Functionality
 - This repository contains two projects: one is the source code where all the backend work is done, and the other is the compiled version of the project.
-- **"ritoskin"** - A C++ project that uses the scrap method of the custom skin to retrieve the skin data, modify it, and convert it to a default skin.
-- **"ritoskin_gui"** - As the name suggests, it is the GUI (Graphical User Interface) version of the "ritoskin" project.
-- **ritoskin_extractor** - A program designed to automate the processing of champion skins. After processing, the skins are neatly organized into a defined folder structure, making it easy to manage and apply modifications.
-- **"resources"** - This folder contains the files/scripts necessary for the project to function.
+- **`ritoskin`** - A C++ project that uses a scraping method to retrieve skin data, modify it, and convert it to a default skin.
+- **`ritoskin_gui`** - The GUI (Graphical User Interface) version of the `ritoskin` project.
+- **`ritoskin_extractor`** - A program designed to automate the processing of champion skins. After processing, the skins are neatly organized into a defined folder structure, making it easy to manage and apply modifications.
+- **`resources`** - This folder contains the files/scripts necessary for the project to function.
 
 ### Important Note
-- **"receive_champion_data.py"** - To retrieve the entire set of "champion" data, we can use the Data Dragon (DDragon) service provided by Riot Games. Each champion has a similar JSON file hosted at a similar URL. However, fetching all champion data requires accessing the specific JSON file for each champion.
-- **"scrap_tex_to_dds.py"** - (Patch 14.19) This script was developed as a solution to Riot Games' new method of encrypting the skin icon art (from .dds to .tex), which made it almost impossible to retrieve the skin icon art from the game files (used to identify the champion skin), causing the icon to appear as a black square in the game.
+- **`receive_champion_data.py`** - To retrieve the entire set of champion data, we can use the Data Dragon (DDragon) service provided by Riot Games. Each champion has a similar JSON file hosted at a similar URL. However, fetching all champion data requires accessing the specific JSON file for each champion.
+- **`scrap_tex_to_dds.py`** - (Patch 14.19) This script was developed as a solution to Riot Games' new method of encrypting the skin icon art (from `.dds` to `.tex`), which made it almost impossible to retrieve the skin icon art from the game files (used to identify the champion skin), causing the icon to appear as a black square in the game.
 
 ## Usage Instructions
 - Download and extract the project.
@@ -48,7 +49,7 @@
 5. Use the custom skin loader to load the skin into the game.
 
 ### Video Tutorial
-- TODO
+- TODO:  A video tutorial will be available soon.
 
 ## Resources
 - [Obsidian](https://github.com/Crauzer/Obsidian)
