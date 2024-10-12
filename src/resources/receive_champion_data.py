@@ -41,7 +41,7 @@ def process_champion(champion_key, version):
     champion_json = fetch_json(url)
     skin_data = extract_skin_data(champion_json, champion_key)
     save_skin_data(champion_key, skin_data)
-    print(f"Extracted skins for {champion_key}")
+    print(f"Extract JSON data about skins from {champion_key}")
 
 def main():
     create_output_directory()
