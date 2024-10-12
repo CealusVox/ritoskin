@@ -134,16 +134,17 @@ void process_champion_folder(const fs::path& champion_folder) {
 
 void process_bin_file(const fs::path& bin_file_path, const fs::path& output_folder, const std::string& champion_name, int skin_number) {
     try {
-        std::cout << "Convert " << bin_file_path << " in .py...\n";
+        // std::cout << "Convert " << bin_file_path << " in .py...\n";
         convert_bin_to_py(bin_file_path);
 
         fs::path py_file_path = bin_file_path;
         py_file_path.replace_extension(".py");
 
-        std::cout << "Modify " << py_file_path << "...\n";
+        // std::cout << "Modify " << py_file_path << "...\n";
+        std::cout << "Processing " << champion_name << " with skin " << skin_number << " ...\n";
         modify_py_file(py_file_path);
 
-        std::cout << "Convert " << py_file_path << " in .bin...\n";
+        // std::cout << "Convert " << py_file_path << " in .bin...\n";
         convert_py_to_bin(py_file_path);
 
         std::string new_champion_folder_name = champion_name + "_" + std::to_string(skin_number);
@@ -161,7 +162,6 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& output_fold
 }
 
 void convert_bin_to_py(const fs::path& file_path) {
-    // https://github.com/moonshadow565/ritobin
     std::string command = "..\\resources\\bin\\ritobin_cli.exe \"" + file_path.string() + "\"";
     int result = std::system(command.c_str());
     if (result != 0) {
