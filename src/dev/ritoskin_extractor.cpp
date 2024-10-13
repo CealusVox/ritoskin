@@ -17,7 +17,23 @@
  */
 
 #include "ritoskin_extractor.h"
+#include <regex>
+#include <map>
 
+bool is_valid_skin_file(const std::string& filename) {
+    std::regex pattern(R"(skin\d+\.bin)");
+    return std::regex_match(filename, pattern);
+}
+/*
+    TODO: DataDragon is Case Sensitive and has some issues related with champions name.
+    For example: Dr Mundo is "DrMundo" in DataDragon, but this program 
+    returns as drmundo and my python reads exacly the folder name.
+
+    I've tried to capitalize the first letter and works at most of the cases
+    except for some champions that has this issue.
+
+    We probably need a dictionary to match with the Data Dragon sensitive case names.
+*/
 int main() {
     try {
         fs::path current_dir = fs::current_path();
@@ -65,32 +81,44 @@ void process_champion_folder(const fs::path& champion_folder) {
 
     fs::path characters_folder = champion_folder / "skins";
 
-    std::vector<fs::path> skin_files;
+    std::map<int, fs::path> skin_map;
     if (fs::exists(characters_folder) && fs::is_directory(characters_folder)) {
         for (const auto& entry : fs::recursive_directory_iterator(characters_folder)) {
             if (entry.path().extension() == ".bin" && entry.path().filename().string().find("skin") == 0) {
-                skin_files.push_back(entry.path());
+                std::string filename = entry.path().filename().string();
+                if (is_valid_skin_file(filename)) {
+                    int skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
+                    skin_map[skin_number] = entry.path();
+                } else {
+                    std::cout << "Warning: Invalid skin file name format: " << filename << std::endl;
+                }
             }
         }
     }
 
-    std::sort(skin_files.begin(), skin_files.end(), [](const fs::path& a, const fs::path& b) {
-        std::string a_str = a.filename().string();
-        std::string b_str = b.filename().string();
-        int a_num = std::stoi(a_str.substr(4, a_str.find('.') - 4));
-        int b_num = std::stoi(b_str.substr(4, b_str.find('.') - 4));
-        return a_num < b_num;
-    });
+    std::cout << "Found " << skin_map.size() << " valid skin files for " << champion_name << std::endl;
+    for (const auto& [number, path] : skin_map) {
+        std::cout << "  Skin " << number << ": " << path.filename().string() << std::endl;
+    }
 
-    for (size_t i = 0; i < skin_files.size(); ++i) {
-        fs::path skin_folder = extracted_skins_folder / std::to_string(i);
+    for (const auto& [number, path] : skin_map) {
+        fs::path skin_folder = extracted_skins_folder / std::to_string(number);
         fs::create_directories(skin_folder);
-        process_bin_file(skin_files[i], skin_folder, i);
+        process_bin_file(path, skin_folder, number);
     }
 }
 
 void process_bin_file(const fs::path& bin_file_path, const fs::path& output_folder, int skin_number) {
     try {
+        std::string filename = bin_file_path.filename().string();
+        int file_skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
+        
+        if (file_skin_number != skin_number) {
+            std::cout << "Warning: Mismatch in skin numbering for " << filename 
+                      << ". File suggests " << file_skin_number 
+                      << ", but processing as " << skin_number << std::endl;
+        }
+
         convert_bin_to_py(bin_file_path);
 
         fs::path py_file_path = bin_file_path;

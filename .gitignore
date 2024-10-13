@@ -1,4 +1,5 @@
 src/ritoskin_extractor/process_champions
+src/ritoskin_extractor/output
 src/resources/bin
 .vscode
 src/dev/*.exe

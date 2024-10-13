@@ -81,7 +81,7 @@ class SkinExtractor:
 
     def download_champion_data(self, champion_name):
         """Download champion data from Data Dragon."""
-        url = f"https://ddragon.leagueoflegends.com/cdn/14.20.1/data/en_US/champion/{champion_name.capitalize()}.json"
+        url = f"https://ddragon.leagueoflegends.com/cdn/14.20.1/data/en_US/champion/{champion_name}.json"
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -199,7 +199,7 @@ class SkinExtractor:
             return
 
         # Create skin mapping
-        skins = champion_data["data"][champion_name.capitalize()]["skins"]
+        skins = champion_data["data"][champion_name]["skins"]
         skin_mapping = {str(skin["num"]): skin["name"] for skin in skins}
         logger.info(f"Found skins: {skin_mapping}")
 
