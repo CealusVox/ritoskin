@@ -232,6 +232,17 @@ def main():
         for champion_folder in champion_folders:
             champion_name = champion_folder.name
             logger.info(f"Processing champion: {champion_name}")
+            """
+                TODO: This is a temporary fix that works in most cases. The problem tho happens 
+                when the champion name has more than one word. In this case, the script will fail
+                to find the champion data and will not process the skins because Data Dragon is case sensitive
+
+                For example: drmundo will become Drmundo, but data dragon only has DrMundo.
+
+                The solution is to create a dictionary with the champions names at Data Dragon.
+            """
+            champion_name = champion_name.capitalize()
+
             extractor.process_champion_skins(champion_name)
         
         
