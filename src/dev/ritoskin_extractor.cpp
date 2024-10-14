@@ -17,8 +17,6 @@
  */
 
 #include "ritoskin_extractor.h"
-#include <regex>
-#include <map>
 
 bool is_valid_skin_file(const std::string& filename) {
     std::regex pattern(R"(skin\d+\.bin)");
