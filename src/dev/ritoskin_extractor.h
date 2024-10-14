@@ -9,6 +9,7 @@
 #include <sstream>
 #include <filesystem>
 #include <regex>
+#include <map>
 // https://github.com/nlohmann/json
 #include "../resources/json.hpp"
 
