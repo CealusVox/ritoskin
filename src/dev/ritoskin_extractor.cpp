@@ -22,16 +22,7 @@ bool is_valid_skin_file(const std::string& filename) {
     std::regex pattern(R"(skin\d+\.bin)");
     return std::regex_match(filename, pattern);
 }
-/*
-    TODO: DataDragon is Case Sensitive and has some issues related with champions name.
-    For example: Dr Mundo is "DrMundo" in DataDragon, but this program 
-    returns as drmundo and my python reads exacly the folder name.
 
-    I've tried to capitalize the first letter and works at most of the cases
-    except for some champions that has this issue.
-
-    We probably need a dictionary to match with the Data Dragon sensitive case names.
-*/
 int main() {
     try {
         fs::path current_dir = fs::current_path();
