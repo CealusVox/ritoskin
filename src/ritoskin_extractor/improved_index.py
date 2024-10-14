@@ -8,12 +8,31 @@ import shutil
 from pathlib import Path
 import logging
 from zipfile import ZipFile
+import colorsys
 
 # Constants
-GAME_PATH = Path(r"V:\Riot Games\League of Legends\Game")
+GAME_PATH = Path(r"C:\Riot Games\League of Legends\Game")
 MOD_TOOLS_EXE = "mod-tools.exe"
+CHAMPION_NAME_MAP = {
+    "drmundo": "DrMundo",
+    'missfortune': 'MissFortune',
+    'aurelionsol': 'AurelionSol',
+    'jarvaniv': 'JarvanIV',
+    'kogmaw': 'KogMaw',
+    'reksai': 'RekSai',
+    'twistedfate': 'TwistedFate',
+    'xinzhao': 'XinZhao',
+    'tahmkench': 'TahmKench',
+    # add more if needed
+}
 
+# Add the resources folder to the system path
 script_dir = Path(__file__).parent.absolute()
+resources_dir = script_dir.parent / 'resources'
+sys.path.append(str(resources_dir))
+
+from receive_champion_data import get_latest_version
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -28,6 +47,8 @@ class SkinExtractor:
         self.output_dir = self.script_dir / "output"
         self.mod_tools_path = self.script_dir / MOD_TOOLS_EXE
         self.game_path = GAME_PATH
+        self.version = get_latest_version()
+        
         self._ensure_mod_tools_exists()
         self.output_dir.mkdir(exist_ok=True)
 
@@ -179,6 +200,111 @@ class SkinExtractor:
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             raise
+        
+    @staticmethod
+    def hex_to_rgb(hex_color):
+        """Convert a hex color to RGB."""
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) != 6:
+            raise ValueError(f"Invalid hex color: {hex_color}")
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+    @staticmethod
+    def rgb_to_hsv(rgb):
+        """Convert RGB to HSV color space."""
+        return colorsys.rgb_to_hsv(*(x/255.0 for x in rgb))
+
+    @staticmethod
+    def interpolate_color(color1, color2):
+        """Interpolate between two colors."""
+        rgb1 = SkinExtractor.hex_to_rgb(color1)
+        rgb2 = SkinExtractor.hex_to_rgb(color2)
+        return '#' + ''.join([f"{int((a + b) / 2):02x}" for a, b in zip(rgb1, rgb2)])
+
+    @staticmethod
+    def get_color_name(hex_colors):
+        """Convert hex color(s) to the nearest named color."""
+        logging.debug(f"Getting color name for: {hex_colors}")
+        
+        # Dictionary of common color names and their hex values
+        color_names =  {
+            "Pearl": "#ECF9F8",
+            "Catseye": "#FFEE59",
+            "Amethyst": "#9966CC",
+            "RoseQuartz": "#E58BA5",
+            "Turquoise": "#40E0D0",
+            "Sapphire": "#0F52BA",
+            "Ruby": "#D33528",
+            "Golden": "#FFD700",
+            "Obsidian": "#281f3f",
+            "Emerald": "#2DA130",
+            "Black": "#000000",
+            "Blue": "#0000FF",
+            "Meteorite": "#3B3B3B",
+            "Granite": "#676767",
+            "DarkPurple": "#54209B",
+            "Red": "#FF0000",
+            "Green": "#008000",
+            "Orange": "#FFA500",
+            "Purple": "#800080",
+            "White": "#FFFFFF",
+            "Cyan": "#00FFFF",
+            "Magenta": "#FF00FF",
+            "LightGray": "#D3D3D3",
+            "Brown": "#A52A2A",
+            "DarkBlue": "#00008B",
+            "LightGreen": "#90EE90",
+            "DarkRed": "#8B0000"
+             
+        }
+
+
+        if isinstance(hex_colors, str):
+            hex_colors = [hex_colors]
+
+        if len(hex_colors) == 2 and hex_colors[0] != hex_colors[1]:
+            interpolated_color = SkinExtractor.interpolate_color(hex_colors[0], hex_colors[1])
+        else:
+            interpolated_color = hex_colors[0]
+
+        try:
+            target_rgb = SkinExtractor.hex_to_rgb(interpolated_color)
+            target_hsv = SkinExtractor.rgb_to_hsv(target_rgb)
+
+            min_distance = float('inf')
+            closest_color = 'Unknown'
+
+            for name, color_hex in color_names.items():
+                try:
+                    color_rgb = SkinExtractor.hex_to_rgb(color_hex)
+                    color_hsv = SkinExtractor.rgb_to_hsv(color_rgb)
+                    
+                    # Calculate distance in HSV space
+                    distance = sum((a - b) ** 2 for a, b in zip(target_hsv, color_hsv))
+                    
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_color = name
+                except ValueError as e:
+                    logging.error(f"Error processing predefined color {name}: {color_hex}. Error: {e}")
+                    continue
+
+            return closest_color
+        except Exception as e:
+            logging.error(f"Error processing color: {interpolated_color}. Error: {e}")
+            return "Unknown"
+    
+    def organize_skin_files(self, champion_name: str, skin_name: str, is_chroma: bool, chroma_id: str = None):
+        """Organize skin files into appropriate folders."""
+        champion_dir = self.get_champion_output_dir(champion_name)
+        
+        if is_chroma:
+            skin_base_name = ' '.join(skin_name.split()[:-2])  # Remove "Color Chroma" from the skin name
+            chroma_dir = champion_dir / "chromas" / skin_base_name
+            chroma_dir.mkdir(parents=True, exist_ok=True)
+            return chroma_dir / f"{skin_name} {chroma_id}.fantome"
+        else:
+            return champion_dir / f"{skin_name}.fantome"
 
     def process_champion_skins(self, champion_name: str):
         """Process all skins for a given champion."""
@@ -194,13 +320,20 @@ class SkinExtractor:
 
         skins = champion_data["skins"]
         skin_mapping = {str(skin["id"]): skin["name"] for skin in skins}
+        chroma_mapping = {}
         for skin in skins:
             if "chromas" in skin:
                 for idx, chroma in enumerate(skin["chromas"], start=1):
-                    chroma_name = f"{chroma['name']} {idx}"
-                    skin_mapping[str(chroma["id"])] = chroma_name
+                    chroma_colors = chroma.get("colors", [])
+                    if not chroma_colors:
+                        chroma_colors = ["#FFFFFF"]
+                    logging.debug(f"Processing chroma colors: {chroma_colors}")
+                    color_name = self.get_color_name(chroma_colors)
+                    chroma_name = f"{skin['name']} {color_name} Chroma"
+                    chroma_mapping[str(chroma["id"])] = (chroma_name, str(idx).zfill(2))
 
         logger.info(f"Found skins: {skin_mapping}")
+        logger.info(f"Found chromas: {chroma_mapping}")
 
         base_path = self.champions_dir / champion_name / "skins_extracted"
         if not base_path.exists():
@@ -211,17 +344,40 @@ class SkinExtractor:
             if folder.is_dir() and folder.name.isdigit():
                 skin_id_suffix = folder.name.zfill(3)
                 skin_id = f"{champion_id}{skin_id_suffix}"
+                
                 if skin_id in skin_mapping:
                     skin_name = skin_mapping[skin_id]
-                    data_folder = self.find_data_folder(folder)
-                    
-                    if data_folder:
-                        logger.info(f"Processing skin: {skin_name}")
-                        self.compact_to_fantome(data_folder, skin_name, champion_name)
-                    else:
-                        logger.warning(f"No data folder found in {folder.name}")
+                    is_chroma = False
+                    chroma_id = None
+                elif skin_id in chroma_mapping:
+                    skin_name, chroma_id = chroma_mapping[skin_id]
+                    is_chroma = True
                 else:
-                    logger.warning(f"Folder {folder.name} does not match any known skin ID. Expected ID: {skin_id}")
+                    logger.warning(f"Folder {folder.name} does not match any known skin or chroma ID. Expected ID: {skin_id}")
+                    continue
+
+                data_folder = self.find_data_folder(folder)
+                
+                if data_folder:
+                    logger.info(f"Processing {'chroma' if is_chroma else 'skin'}: {skin_name}")
+                    temp_skin_folder = self.output_dir / "temp" / self.sanitize_filename(skin_name)
+                    temp_skin_folder.mkdir(parents=True, exist_ok=True)
+                    
+                    self.create_info_json(temp_skin_folder, skin_name)
+                    
+                    if self.compact_to_fantome(data_folder, skin_name, champion_name):
+                        # Move the created .fantome file to the appropriate location
+                        source_file = self.get_champion_output_dir(champion_name) / f"{self.sanitize_filename(skin_name)}.fantome"
+                        destination_file = self.organize_skin_files(champion_name, self.sanitize_filename(skin_name), is_chroma, chroma_id)
+                        
+                        if source_file.exists():
+                            destination_file.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.move(str(source_file), str(destination_file))
+                            logger.info(f"Moved {source_file} to {destination_file}")
+                        else:
+                            logger.warning(f"Expected file not found: {source_file}")
+                else:
+                    logger.warning(f"No data folder found in {folder.name}")
 
 def main():
     try:
@@ -234,8 +390,7 @@ def main():
         
         for champion_folder in champion_folders:
             folder_name = champion_folder.name.lower()
-            # champion_name = CHAMPION_NAME_MAP.get(folder_name, folder_name.capitalize())
-            champion_name = folder_name.capitalize()
+            champion_name = CHAMPION_NAME_MAP.get(folder_name, folder_name.capitalize())
             logger.info(f"Processing champion: {champion_name}")
             
             extractor.process_champion_skins(champion_name)
