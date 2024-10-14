@@ -12,26 +12,8 @@ from zipfile import ZipFile
 # Constants
 GAME_PATH = Path(r"V:\Riot Games\League of Legends\Game")
 MOD_TOOLS_EXE = "mod-tools.exe"
-CHAMPION_NAME_MAP = {
-    "drmundo": "DrMundo",
-    'missfortune': 'MissFortune',
-    'aurelionsol': 'AurelionSol',
-    'jarvaniv': 'JarvanIV',
-    'kogmaw': 'KogMaw',
-    'reksai': 'RekSai',
-    'twistedfate': 'TwistedFate',
-    'xinzhao': 'XinZhao',
-    'tahmkench': 'TahmKench',
-    # add more if needed
-}
 
-# Add the resources folder to the system path
 script_dir = Path(__file__).parent.absolute()
-resources_dir = script_dir.parent / 'resources'
-sys.path.append(str(resources_dir))
-
-from receive_champion_data import get_latest_version
-
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -46,8 +28,6 @@ class SkinExtractor:
         self.output_dir = self.script_dir / "output"
         self.mod_tools_path = self.script_dir / MOD_TOOLS_EXE
         self.game_path = GAME_PATH
-        self.version = get_latest_version()
-        
         self._ensure_mod_tools_exists()
         self.output_dir.mkdir(exist_ok=True)
 
@@ -254,7 +234,8 @@ def main():
         
         for champion_folder in champion_folders:
             folder_name = champion_folder.name.lower()
-            champion_name = CHAMPION_NAME_MAP.get(folder_name, folder_name.capitalize())
+            # champion_name = CHAMPION_NAME_MAP.get(folder_name, folder_name.capitalize())
+            champion_name = folder_name.capitalize()
             logger.info(f"Processing champion: {champion_name}")
             
             extractor.process_champion_skins(champion_name)
