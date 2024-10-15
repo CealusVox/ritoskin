@@ -60,6 +60,21 @@ int main() {
     return 0;
 }
 
+std::vector<fs::path> find_related_folders(const fs::path& champion_folder) {
+    std::vector<fs::path> related_folders;
+    std::string champion_name = champion_folder.filename().string();
+    fs::path parent_folder = champion_folder.parent_path();
+
+    for (const auto& entry : fs::directory_iterator(parent_folder)) {
+        if (fs::is_directory(entry) && entry.path().filename().string().find(champion_name) == 0 && entry.path() != champion_folder) {
+            related_folders.push_back(entry.path());
+        }
+    }
+
+    return related_folders;
+}
+
+
 void process_champion_folder(const fs::path& champion_folder) {
     std::string champion_name = champion_folder.filename().string();
     std::cout << "Processing champion: " << champion_name << "\n";
@@ -70,14 +85,14 @@ void process_champion_folder(const fs::path& champion_folder) {
 
     fs::path characters_folder = champion_folder / "skins";
 
-    std::map<int, fs::path> skin_map;
+    std::map<int, std::vector<fs::path>> skin_map;
     if (fs::exists(characters_folder) && fs::is_directory(characters_folder)) {
         for (const auto& entry : fs::recursive_directory_iterator(characters_folder)) {
             if (entry.path().extension() == ".bin" && entry.path().filename().string().find("skin") == 0) {
                 std::string filename = entry.path().filename().string();
                 if (is_valid_skin_file(filename)) {
                     int skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
-                    skin_map[skin_number] = entry.path();
+                    skin_map[skin_number].push_back(entry.path());
                 } else {
                     std::cout << "Warning: Invalid skin file name format: " << filename << std::endl;
                 }
@@ -86,18 +101,43 @@ void process_champion_folder(const fs::path& champion_folder) {
     }
 
     std::cout << "Found " << skin_map.size() << " valid skin files for " << champion_name << std::endl;
-    for (const auto& [number, path] : skin_map) {
-        std::cout << "  Skin " << number << ": " << path.filename().string() << std::endl;
+    for (const auto& [number, paths] : skin_map) {
+        std::cout << "  Skin " << number << ": " << paths.size() << " files\n";
     }
 
-    for (const auto& [number, path] : skin_map) {
-        fs::path skin_folder = extracted_skins_folder / std::to_string(number);
-        fs::create_directories(skin_folder);
-        process_bin_file(path, skin_folder, number);
+    for (const auto& [number, paths] : skin_map) {
+        for (const auto& path : paths) {
+            process_bin_file(path, extracted_skins_folder, number);
+        }
+    }
+
+    std::vector<fs::path> related_folders = find_related_folders(champion_folder);
+    for (const auto& related_folder : related_folders) {
+        process_related_folder(related_folder, extracted_skins_folder, champion_name);
     }
 }
 
-void process_bin_file(const fs::path& bin_file_path, const fs::path& output_folder, int skin_number) {
+void process_related_folder(const fs::path& related_folder, const fs::path& extracted_skins_folder, const std::string& champion_name) {
+    std::string related_name = related_folder.filename().string();
+    std::cout << "Processing related folder: " << related_name << "\n";
+
+    fs::path characters_folder = related_folder / "skins";
+    if (fs::exists(characters_folder) && fs::is_directory(characters_folder)) {
+        for (const auto& entry : fs::recursive_directory_iterator(characters_folder)) {
+            if (entry.path().extension() == ".bin" && entry.path().filename().string().find("skin") == 0) {
+                std::string filename = entry.path().filename().string();
+                if (is_valid_skin_file(filename)) {
+                    int skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
+                    process_bin_file(entry.path(), extracted_skins_folder, skin_number);
+                } else {
+                    std::cout << "Warning: Invalid skin file name format: " << filename << std::endl;
+                }
+            }
+        }
+    }
+}
+
+void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_skins_folder, int skin_number) {
     try {
         std::string filename = bin_file_path.filename().string();
         int file_skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
@@ -119,9 +159,10 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& output_fold
         convert_py_to_bin(py_file_path);
 
         std::string champion_name = bin_file_path.parent_path().parent_path().filename().string();
+        std::string main_champion_name = extracted_skins_folder.parent_path().filename().string();
+        std::string new_champion_folder_name = main_champion_name + "_" + std::to_string(skin_number);
         
-        std::string new_champion_folder_name = champion_name + "_" + std::to_string(skin_number);
-        fs::path new_folder_structure = output_folder / new_champion_folder_name / "data" / "characters" / champion_name / "skins";
+        fs::path new_folder_structure = extracted_skins_folder / std::to_string(skin_number) / new_champion_folder_name / "data" / "characters" / champion_name / "skins";
         fs::create_directories(new_folder_structure);
 
         fs::path new_bin_file_path = new_folder_structure / "skin0.bin";
