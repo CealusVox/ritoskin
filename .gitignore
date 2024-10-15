@@ -4,3 +4,4 @@ src/resources/bin
 .vscode
 src/dev/*.exe
 src/dev/output
+src/resources/__pycache__/*
