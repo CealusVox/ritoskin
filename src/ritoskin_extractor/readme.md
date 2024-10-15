@@ -26,8 +26,6 @@
 - [nlohmann](https://github.com/nlohmann/json)
 - [ritobin](https://github.com/moonshadow565/ritobin)
 
-### To-do:
-- TBA
-
 ## Tutorial
-- [ritoskin-extractor](https://youtu.be/RqHK1s3YZ4Y)
+- [ritoskin-extractor](https://www.youtube.com/playlist?list=PLmfRqBUHwQjJtdoNPbyCKIGC9F4Hog7ov)
+
