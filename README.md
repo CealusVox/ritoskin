@@ -100,6 +100,7 @@ The `dev` directory houses development-related files and partial source code, wh
 
 For those interested in diving deeper into League of Legends modding, we recommend exploring these related projects:
 
+- [Fix-Missing-Assets](https://youtu.be/DuEa4I8vLGk)
 - [Obsidian](https://github.com/Crauzer/Obsidian)
 - [cslol-manager](https://github.com/LeagueToolkit/cslol-manager)
 - [ritobin](https://github.com/moonshadow565/ritobin)
