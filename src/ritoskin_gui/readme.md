@@ -22,4 +22,4 @@ To run the `ritoskin_gui.py`, follow these steps:
 - Further tasks to be announced (TBA).
 
 ## Tutorial
-- [ritoskin-gui](https://www.youtube.com/watch?v=R0_DFiZeGTI)
+- [ritoskin-gui](https://www.youtube.com/playlist?list=PLmfRqBUHwQjIR2GjMQRB9FZ5-06WT2cq0)
