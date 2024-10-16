@@ -73,7 +73,17 @@ std::vector<fs::path> find_related_folders(const fs::path& champion_folder) {
 
     return related_folders;
 }
-
+// function to delete additional folders (e.g. aniviaegg, aniviaicewall, nunuball, etc.)
+void delete_related_folders(const std::vector<fs::path>& related_folders) {
+    for (const auto& folder : related_folders) {
+        try {
+            fs::remove_all(folder);
+            std::cout << "Deleted folder: " << folder << "\n";
+        } catch (const std::exception& e) {
+            std::cout << "Error deleting folder " << folder << ": " << e.what() << "\n";
+        }
+    }
+}
 
 void process_champion_folder(const fs::path& champion_folder) {
     std::string champion_name = champion_folder.filename().string();
@@ -115,6 +125,8 @@ void process_champion_folder(const fs::path& champion_folder) {
     for (const auto& related_folder : related_folders) {
         process_related_folder(related_folder, extracted_skins_folder, champion_name);
     }
+
+    delete_related_folders(related_folders);
 }
 
 void process_related_folder(const fs::path& related_folder, const fs::path& extracted_skins_folder, const std::string& champion_name) {
