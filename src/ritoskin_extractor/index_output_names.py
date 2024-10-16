@@ -15,6 +15,9 @@ GAME_PATH = Path(r"C:\Riot Games\League of Legends\Game")
 MOD_TOOLS_EXE = "mod-tools.exe"
 
 script_dir = Path(__file__).parent.absolute()
+resources_dir = script_dir.parent / "resources" /"cslol"
+mod_tools_path = resources_dir / MOD_TOOLS_EXE
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -27,14 +30,15 @@ class SkinExtractor:
         self.script_dir = script_dir
         self.champions_dir = self.script_dir / "process_champions"
         self.output_dir = self.script_dir / "output"
-        self.mod_tools_path = self.script_dir / MOD_TOOLS_EXE
+        self.mod_tools_path = mod_tools_path
         self.game_path = GAME_PATH
         self._ensure_mod_tools_exists()
         self.output_dir.mkdir(exist_ok=True)
 
     def _ensure_mod_tools_exists(self):
         if not self.mod_tools_path.exists():
-            raise FileNotFoundError(f"{MOD_TOOLS_EXE} not found at: {self.mod_tools_path}")
+            logger.error(f"{MOD_TOOLS_EXE} not found in {resources_dir}")
+            raise FileNotFoundError(f"{MOD_TOOLS_EXE} not found in {resources_dir}")
 
     def get_champion_output_dir(self, champion_name: str) -> Path:
         """Create and return champion-specific output directory."""
