@@ -19,7 +19,7 @@
 #include "ritoskin_extractor.h"
 
 bool is_valid_skin_file(const std::string& filename) {
-    std::regex pattern(R"(skin\d+\.bin)");
+    static const std::regex pattern(R"(skin\d+\.bin)");
     return std::regex_match(filename, pattern);
 }
 
@@ -29,8 +29,8 @@ int main() {
         fs::path champions_folder = current_dir / "process_champions";
 
         if (!fs::exists(champions_folder) || !fs::is_directory(champions_folder)) {
-            std::cout << "'process_champions' was not found in the current directory\n";
-            std::cout << "Make sure it exists, or create if necessary!\n";
+            std::cerr << "'process_champions' was not found in the current directory\n";
+            std::cerr << "Make sure it exists, or create if necessary!\n";
             return 1;
         }
 
@@ -48,7 +48,7 @@ int main() {
         std::cout << "Process Complete!\n";
 
     } catch (const std::exception& e) {
-        std::cout << "Error: " << e.what() << "\n";
+        std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
 
@@ -73,14 +73,14 @@ std::vector<fs::path> find_related_folders(const fs::path& champion_folder) {
 
     return related_folders;
 }
-// function to delete additional folders (e.g. aniviaegg, aniviaicewall, nunuball, etc.)
+
 void delete_related_folders(const std::vector<fs::path>& related_folders) {
     for (const auto& folder : related_folders) {
         try {
             fs::remove_all(folder);
             std::cout << "Deleted folder: " << folder << "\n";
         } catch (const std::exception& e) {
-            std::cout << "Error deleting folder " << folder << ": " << e.what() << "\n";
+            std::cerr << "Error deleting folder " << folder << ": " << e.what() << "\n";
         }
     }
 }
@@ -104,7 +104,7 @@ void process_champion_folder(const fs::path& champion_folder) {
                     int skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
                     skin_map[skin_number].push_back(entry.path());
                 } else {
-                    std::cout << "Warning: Invalid skin file name format: " << filename << std::endl;
+                    std::cerr << "Warning: Invalid skin file name format: " << filename << std::endl;
                 }
             }
         }
@@ -142,7 +142,7 @@ void process_related_folder(const fs::path& related_folder, const fs::path& extr
                     int skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
                     process_bin_file(entry.path(), extracted_skins_folder, skin_number);
                 } else {
-                    std::cout << "Warning: Invalid skin file name format: " << filename << std::endl;
+                    std::cerr << "Warning: Invalid skin file name format: " << filename << std::endl;
                 }
             }
         }
@@ -155,7 +155,7 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         int file_skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
         
         if (file_skin_number != skin_number) {
-            std::cout << "Warning: Mismatch in skin numbering for " << filename 
+            std::cerr << "Warning: Mismatch in skin numbering for " << filename 
                       << ". File suggests " << file_skin_number 
                       << ", but processing as " << skin_number << std::endl;
         }
@@ -184,7 +184,7 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         fs::remove(py_file_path);
 
     } catch (const std::exception& e) {
-        std::cout << "Error processing file: " << e.what() << "\n";
+        std::cerr << "Error processing file: " << e.what() << "\n";
     }
 }
 
