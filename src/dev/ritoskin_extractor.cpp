@@ -197,29 +197,29 @@ void convert_bin_to_py(const fs::path& file_path) {
 }
 
 void modify_py_file(const fs::path& file_path) {
-    std::ifstream input_file(file_path);
+    static const std::regex skin_data_pattern(R"(("Characters/[^/]+/Skins/Skin)\d+(" *= *SkinCharacterDataProperties *\{))");
+    static const std::regex resource_resolver_pattern(R"(("Characters/[^/]+/Skins/Skin)\d+(/Resources" *= *ResourceResolver *\{))");
+    static const std::regex skin_number_pattern(R"(Skin\d+)");
+
+    std::ifstream input_file(file_path, std::ios::in | std::ios::binary);
     if (!input_file.is_open()) {
         throw std::runtime_error("Error opening file: " + file_path.string());
     }
 
-    std::ofstream output_file(file_path.string() + ".tmp");
+    std::ofstream output_file(file_path.string() + ".tmp", std::ios::out | std::ios::binary);
     if (!output_file.is_open()) {
         input_file.close();
         throw std::runtime_error("Error creating temporary file");
     }
 
     std::string line;
-    std::regex skin_data_pattern(R"(("Characters/[^/]+/Skins/Skin)\d+(" *= *SkinCharacterDataProperties *\{))");
-    std::regex resource_resolver_pattern(R"(("Characters/[^/]+/Skins/Skin)\d+(/Resources" *= *ResourceResolver *\{))");
-
     bool modified = false;
     while (std::getline(input_file, line)) {
-        std::string modified_line = line;
         if (std::regex_search(line, skin_data_pattern) || std::regex_search(line, resource_resolver_pattern)) {
-            modified_line = std::regex_replace(line, std::regex(R"(Skin\d+)"), "Skin0");
+            line = std::regex_replace(line, skin_number_pattern, "Skin0");
             modified = true;
         }
-        output_file << modified_line << '\n';
+        output_file << line << '\n';
     }
 
     input_file.close();
