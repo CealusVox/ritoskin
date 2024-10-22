@@ -1,6 +1,6 @@
 # RitoSkin
 
-Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience. However, the current landscape of custom skins presents several challenges, including high costs and potential security risks from private custom skin hacks.
+Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience. 
 
 - Custom skins and skin hacks are prevalent in the community.
 - While custom skins are permitted by Riot Games, skin hacks are strictly prohibited.
