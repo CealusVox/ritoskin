@@ -1,5 +1,5 @@
 # RitoSkin Extractor
-
+- Small note: If python show any error related to path, try modifiy this line of code `GAME_PATH = Path(r"C:\Riot Games\League of Legends\Game")` from `index_output_names.py` to your game path (eg. `r"D:\Riot Games\League of Legends\Game"`)!
 ## Overview
 **RitoSkin Extractor** is a program designed to automate the processing of champion skins for *League of Legends*. It handles `.bin` files associated with skins, converts them to `.py` format for modification, and then reconverts them back to `.bin`. After processing, the skins are neatly organized into a defined folder structure, making it easy to manage and apply modifications.
 
