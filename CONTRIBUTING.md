@@ -14,4 +14,4 @@ https://github.com/user-attachments/assets/8d3ebb78-ff2e-414b-895a-8ffaf38ceb90
 
 Happy coding! 💻
 
-The Ritoskin Team
+The RitoSkin Team
