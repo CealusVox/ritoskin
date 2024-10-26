@@ -96,6 +96,8 @@ The `dev` directory houses development-related files and partial source code, wh
 > [!WARNING]  
 > Always ensure you're using the latest hash lists to avoid compatibility issues with recent game updates.
 
+People who are interested in contributing to the project can find more information in the `CONTRIBUTING.md` file.
+
 ## Resources
 
 For those interested in diving deeper into League of Legends modding, we recommend exploring these related projects:
@@ -112,6 +114,10 @@ These resources have been invaluable in the development of RitoSkin and offer po
 ## Contact
 
 If you have questions, suggestions, or concerns about RitoSkin, we're here to help. You can reach out to us on Discord: `nylish.me`
+
+Your support is greatly appreciated! Good luck on the Rift!
+
+Show me some ❤️ by 🌟 this repository!
 
 ---
 
