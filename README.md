@@ -115,11 +115,13 @@ These resources have been invaluable in the development of RitoSkin and offer po
 
 ## Contact
 
-If you have questions, suggestions, or concerns about RitoSkin, we're here to help. You can reach out to us on Discord: `nylish.me`
-
-Your support is greatly appreciated! Good luck on the Rift!
-
 Show me some ❤️ by 🌟 this repository!
+
+If you have questions, suggestions, or concerns about RitoSkin, we're here to help.
+
+You can reach out to us on Discord: `nylish.me`
+
+Good luck on the Rift!
 
 ---
 
