@@ -1,6 +1,8 @@
 # RitoSkin
 
-Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience. 
+![RitoSkin](assets/ritoskin.jpg)
+
+Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience.
 
 - Custom skins and skin hacks are prevalent in the community.
 - While custom skins are permitted by Riot Games, skin hacks are strictly prohibited.
@@ -14,7 +16,7 @@ RitoSkin aims to address these issues by providing an open-source solution for c
 
 ## Features
 
-RitoSkin offers a comprehensive set of tools for skin customization. At its core, the project utilizes advanced methods to retrieve skin data from the game files. This data can then be modified, allowing users to create unique skins or alter existing ones. 
+RitoSkin offers a comprehensive set of tools for skin customization. At its core, the project utilizes advanced methods to retrieve skin data from the game files. This data can then be modified, allowing users to create unique skins or alter existing ones.
 
 A key feature of RitoSkin is its ability to convert these custom skins into a format compatible with the default game skins, ensuring seamless integration. To make the process user-friendly, we've developed a graphical interface that simplifies skin management tasks.
 
@@ -28,7 +30,7 @@ To get started with RitoSkin, follow these steps:
 2. Extract the contents to a directory of your choice.
 3. Ensure you have the necessary dependencies installed.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > RitoSkin requires [Ritobin](https://github.com/moonshadow565/ritobin) to function correctly. After downloading Ritobin, place it in the `resources` folder of your RitoSkin installation.
 
 ## Updating Hashes
@@ -61,12 +63,12 @@ Using RitoSkin involves few steps:
 
 ### Processing
 
-After preparing the files, execute `ritoskin_extractor.exe`. 
+After preparing the files, execute `ritoskin_extractor.exe`.
 > Using RitoBin, this program goes inside each skin, convert it to `.py`, apply the necessary changes, convert it to `.bin` again and store inside `skins_extracted` inside of the champion folder.
 That's it. You'll have all fles needed inside of each skin folder. If you want to change the IDs to the skin name and compress to .fantome, you can run `index_output_names.py`. All
 compressed files will be available inside the `output/` folder
 
-> [!NOTE]  
+> [!NOTE]
 > To ensure smooth execution of the Python script, you may need to install some external libraries using `pip install <requirement name>`
 
 Finally, use a custom skin loader to apply your newly created or modified skin in-game.
@@ -93,7 +95,7 @@ In the `resources` folder, you'll find necessary files and scripts that support 
 The `dev` directory houses development-related files and partial source code, which may be of interest to contributors or advanced users looking to extend RitoSkin's capabilities.
 
 
-> [!WARNING]  
+> [!WARNING]
 > Always ensure you're using the latest hash lists to avoid compatibility issues with recent game updates.
 
 People who are interested in contributing to the project can find more information in the `CONTRIBUTING.md` file.
