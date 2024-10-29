@@ -1,6 +1,6 @@
 # RitoSkin
 
-![RitoSkin](assets/ritoskin.jpg)
+![RitoSkin](assets/ritoskin_panel.jpg)
 
 Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience.
 
