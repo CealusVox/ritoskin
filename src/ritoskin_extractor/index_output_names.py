@@ -13,10 +13,12 @@ import colorsys
 # Constants
 GAME_PATH = Path(r"C:\Riot Games\League of Legends\Game")
 MOD_TOOLS_EXE = "mod-tools.exe"
+CSLOL_DLL = "cslol-dll.dll"
 
 script_dir = Path(__file__).parent.absolute()
 resources_dir = script_dir.parent / "resources" /"cslol"
 mod_tools_path = resources_dir / MOD_TOOLS_EXE
+cslol_dll_path = resources_dir / CSLOL_DLL
 
 # Set up logging
 logging.basicConfig(
@@ -31,14 +33,21 @@ class SkinExtractor:
         self.champions_dir = self.script_dir / "process_champions"
         self.output_dir = self.script_dir / "output"
         self.mod_tools_path = mod_tools_path
+        self.cslol_dll_path = cslol_dll_path
         self.game_path = GAME_PATH
-        self._ensure_mod_tools_exists()
+        self._ensure_tools_exists()
         self.output_dir.mkdir(exist_ok=True)
 
-    def _ensure_mod_tools_exists(self):
+    def _ensure_tools_exists(self):
         if not self.mod_tools_path.exists():
             logger.error(f"{MOD_TOOLS_EXE} not found in {resources_dir}")
             raise FileNotFoundError(f"{MOD_TOOLS_EXE} not found in {resources_dir}")
+        if not self.cslol_dll_path.exists():
+            logger.error(f"{CSLOL_DLL} not found in {resources_dir}")
+            raise FileNotFoundError(f"{CSLOL_DLL} not found in {resources_dir}")
+        if not self.game_path.exists():
+            logger.error(f"Game path not found at {GAME_PATH}")
+            raise FileNotFoundError(f"Game path not found at {GAME_PATH}")
 
     def get_champion_output_dir(self, champion_name: str) -> Path:
         """Create and return champion-specific output directory."""
@@ -56,21 +65,21 @@ class SkinExtractor:
         try:
             champion_output_dir = self.get_champion_output_dir(champion_name)
             zip_path = champion_output_dir / f"{folder_path.name}.fantome"
-            
+
             if zip_path.exists():
                 zip_path.unlink()
-            
+
             with ZipFile(zip_path, 'w') as zipf:
                 for root, _, files in os.walk(folder_path):
                     for file in files:
                         file_path = Path(root) / file
                         arcname = file_path.relative_to(folder_path)
                         zipf.write(file_path, arcname)
-            
+
             shutil.rmtree(folder_path)
             logger.info(f"Created zip file: {zip_path}")
             return zip_path
-            
+
         except Exception as e:
             logger.error(f"Error creating zip file: {e}")
             raise
@@ -94,11 +103,11 @@ class SkinExtractor:
             response.raise_for_status()
             champions = response.json()
             normalized_name = champion_name.lower().replace(" ", "")
-            
+
             for champion in champions:
                 if champion["alias"].lower() == normalized_name:
                     return champion["id"]
-            
+
             logger.error(f"Champion ID not found for {champion_name}")
             return None
 
@@ -121,13 +130,13 @@ class SkinExtractor:
             "Name": skin_name,
             "Version": "1.0"
         }
-        
+
         meta_folder = dst_path / "META"
         meta_folder.mkdir(exist_ok=True)
-        
+
         with open(meta_folder / "info.json", "w") as f:
             json.dump(info, f)
-        
+
         logger.info(f"Created info.json for {skin_name}")
 
     def compact_to_fantome(self, champion_folder: Path, skin_name: str, champion_name: str) -> bool:
@@ -137,9 +146,9 @@ class SkinExtractor:
             temp_skin_folder = self.output_dir / "temp" / skin_name
             temp_skin_folder.parent.mkdir(exist_ok=True)
             temp_skin_folder.mkdir(exist_ok=True)
-            
+
             self.create_info_json(temp_skin_folder, skin_name)
-            
+
             command = [
                 str(self.mod_tools_path),
                 'addwad',
@@ -149,12 +158,12 @@ class SkinExtractor:
                 '--noTFT',
                 '--removeUNK'
             ]
-            
+
             logger.info(f"Executing command: {' '.join(command)}")
-            
+
             original_dir = os.getcwd()
             os.chdir(self.mod_tools_path.parent)
-            
+
             try:
                 result = subprocess.run(
                     command,
@@ -166,16 +175,16 @@ class SkinExtractor:
                 logger.info(f"Command output: {result.stdout}")
             finally:
                 os.chdir(original_dir)
-            
+
             zip_path = self.zip_skin_folder(temp_skin_folder, champion_name)
             logger.info(f"Successfully created skin package: {zip_path}")
-            
+
             temp_dir = self.output_dir / "temp"
             if temp_dir.exists() and not any(temp_dir.iterdir()):
                 temp_dir.rmdir()
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             logger.error(f"Error executing mod-tools: {e}")
             logger.error(f"Standard output: {e.stdout}")
@@ -184,7 +193,7 @@ class SkinExtractor:
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             raise
-        
+
     @staticmethod
     def hex_to_rgb(hex_color):
         """Convert a hex color to RGB."""
@@ -209,7 +218,7 @@ class SkinExtractor:
     def get_color_name(hex_colors):
         """Convert hex color(s) to the nearest named color."""
         logging.debug(f"Getting color name for: {hex_colors}")
-        
+
         # Dictionary of common color names and their hex values
         color_names =  {
             "Pearl": "#ECF9F8",
@@ -239,7 +248,7 @@ class SkinExtractor:
             "DarkBlue": "#00008B",
             "LightGreen": "#90EE90",
             "DarkRed": "#8B0000"
-             
+
         }
 
         if isinstance(hex_colors, str):
@@ -261,10 +270,10 @@ class SkinExtractor:
                 try:
                     color_rgb = SkinExtractor.hex_to_rgb(color_hex)
                     color_hsv = SkinExtractor.rgb_to_hsv(color_rgb)
-                    
+
                     # Calculate distance in HSV space
                     distance = sum((a - b) ** 2 for a, b in zip(target_hsv, color_hsv))
-                    
+
                     if distance < min_distance:
                         min_distance = distance
                         closest_color = name
@@ -276,11 +285,11 @@ class SkinExtractor:
         except Exception as e:
             logging.error(f"Error processing color: {interpolated_color}. Error: {e}")
             return "Unknown"
-    
+
     def organize_skin_files(self, champion_name: str, skin_name: str, is_chroma: bool, chroma_id: str = None):
         """Organize skin files into appropriate folders."""
         champion_dir = self.get_champion_output_dir(champion_name)
-        
+
         if is_chroma:
             skin_base_name = ' '.join(skin_name.split()[:-2])  # Remove "Color Chroma" from the skin name
             chroma_dir = champion_dir / "chromas" / skin_base_name
@@ -327,7 +336,7 @@ class SkinExtractor:
             if folder.is_dir() and folder.name.isdigit():
                 skin_id_suffix = folder.name.zfill(3)
                 skin_id = f"{champion_id}{skin_id_suffix}"
-                
+
                 if skin_id in skin_mapping:
                     skin_name = skin_mapping[skin_id]
                     is_chroma = False
@@ -340,19 +349,19 @@ class SkinExtractor:
                     continue
 
                 data_folder = self.find_data_folder(folder)
-                
+
                 if data_folder:
                     logger.info(f"Processing {'chroma' if is_chroma else 'skin'}: {skin_name}")
                     temp_skin_folder = self.output_dir / "temp" / self.sanitize_filename(skin_name)
                     temp_skin_folder.mkdir(parents=True, exist_ok=True)
-                    
+
                     self.create_info_json(temp_skin_folder, skin_name)
-                    
+
                     if self.compact_to_fantome(data_folder, skin_name, champion_name):
                         # Move the created .fantome file to the appropriate location
                         source_file = self.get_champion_output_dir(champion_name) / f"{self.sanitize_filename(skin_name)}.fantome"
                         destination_file = self.organize_skin_files(champion_name, self.sanitize_filename(skin_name), is_chroma, chroma_id)
-                        
+
                         if source_file.exists():
                             destination_file.parent.mkdir(parents=True, exist_ok=True)
                             shutil.move(str(source_file), str(destination_file))
@@ -366,19 +375,19 @@ def main():
     try:
         extractor = SkinExtractor()
         champion_folders = [f for f in extractor.champions_dir.iterdir() if f.is_dir() and f.name != "output"]
-        
+
         if not champion_folders:
             logger.error("No champion folders found!")
             return
-        
+
         for champion_folder in champion_folders:
             folder_name = champion_folder.name.lower()
             # champion_name = CHAMPION_NAME_MAP.get(folder_name, folder_name.capitalize())
             champion_name = folder_name.capitalize()
             logger.info(f"Processing champion: {champion_name}")
-            
+
             extractor.process_champion_skins(champion_name)
-        
+
     except Exception as e:
         logger.error(f"Script failed: {e}")
         raise
