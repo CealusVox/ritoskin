@@ -31,9 +31,18 @@ To get started with RitoSkin, follow these steps:
 3. Ensure you have the necessary dependencies installed.
 
 > [!IMPORTANT]
-> RitoSkin requires [Ritobin](https://github.com/moonshadow565/ritobin) to function correctly. After downloading Ritobin, place it in the `resources` folder of your RitoSkin installation.
+> RitoSkin requires [Ritobin](https://github.com/moonshadow565/ritobin) to function correctly. After downloading Ritobin, place it in the `resources` folder of your RitoSkin location.
+
+> [!IMPORTANT]
+> RitoSkin requires [cslol-dll.dll](https://github.com/LeagueToolkit/cslol-patcher/releases/) to function correctly. After downloading .dll, place it in the `resources\cslol` folder of your RitoSkin location.
+
+### Why open-source cslol not in the resources folder?
+
+The cslol-patcher is a project that we don't own, and we don't have the right to redistribute it. We can't include it in the resources folder. You can download it from the official repository [here](https://github.com/LeagueToolkit/cslol-patcher/releases/) and place it in the `resources/cslol` folder.
 
 ## Updating Hashes
+
+- [Update-ritobin-hashes](https://youtu.be/-zzso5CYZMY)
 
 RitoSkin relies on up-to-date hash lists to function optimally. To keep these hashes current, we recommend using the CommunityDragon Toolbox. Here's how to use it:
 
@@ -83,6 +92,9 @@ ritoskin/
 │   └── ritoskin_gui.cpp
 ├── resources/
 │   ├── bin/
+│   ├── cslol/
+│       ├── cslol-dll.dll
+│       └── mod-tools.exe
 │   └── scripts/
 ├── dev/
 └── README.md
@@ -115,11 +127,11 @@ These resources have been invaluable in the development of RitoSkin and offer po
 
 ## Contact
 
-Show me some ❤️ by 🌟 this repository!
-
 If you have questions, suggestions, or concerns about RitoSkin, we're here to help.
 
 You can reach out to us on Discord: `nylish.me`
+
+Show me some ❤️ by 🌟 this repository!
 
 Good luck on the Rift!
 
