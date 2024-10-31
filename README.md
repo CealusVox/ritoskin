@@ -34,11 +34,11 @@ To get started with RitoSkin, follow these steps:
 > RitoSkin requires [Ritobin](https://github.com/moonshadow565/ritobin) to function correctly. After downloading Ritobin, place it in the `resources` folder of your RitoSkin location.
 
 > [!IMPORTANT]
-> RitoSkin requires [cslol-dll.dll](https://github.com/LeagueToolkit/cslol-patcher/releases/) to function correctly. After downloading .dll, place it in the `resources\cslol` folder of your RitoSkin location.
+> RitoSkin requires `cslol-dll.dll` to function correctly. Please obtain this file in accordance with LeagueToolkit's licensing terms and place it in the `resources\cslol` folder of your RitoSkin installation.
 
-### Why open-source cslol not in the resources folder?
+### Why isn't `cslol-dll.dll` included in the resources folder?
 
-The cslol-patcher is a project that we don't own, and we don't have the right to redistribute it. We can't include it in the resources folder. You can download it from the official repository [here](https://github.com/LeagueToolkit/cslol-patcher/releases/) and place it in the `resources/cslol` folder.
+The `cslol-dll.dll` is part of the cslol-patcher project, which is owned by LeagueToolkit. We do not have the rights to redistribute it or provide direct download links. You must acquire it yourself while complying with their license terms.
 
 ## Updating Hashes
 
