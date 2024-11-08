@@ -8,6 +8,9 @@ REM Define the relative path to the source file and output executable name
 set "sourceFile=%scriptDir%..\dev\ritoskin_extractor.cpp"
 set "outputExe=ritoskin_extractor.exe"
 
+REM Run the script to sync hashes
+python "%scriptDir%..\dev\ritoskin_sync_hashes.py"
+
 REM Compile the source file
 g++ -std=c++17 -static -o "%scriptDir%\%outputExe%" "%sourceFile%"
 
