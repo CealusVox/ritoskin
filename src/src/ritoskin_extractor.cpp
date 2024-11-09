@@ -90,7 +90,7 @@ void modify_py_file(const fs::path& file_path) {
         fs::rename(file_path.string() + ".tmp", file_path);
     } else {
         fs::remove(file_path.string() + ".tmp");
-        std::cout << "Modification not needed for " << file_path << "\n";
+        std::cout << "!! Error: Outdated Hashes | Skin path obfuscated !! " << file_path << "\n";
     }
 }
 
@@ -118,7 +118,7 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         fs::path py_file_path = bin_file_path;
         py_file_path.replace_extension(".py");
 
-        std::cout << "Processing skin " << skin_number << " ...\n";
+        std::cout << "\n" << "Processing skin " << skin_number << " ...\n";
         modify_py_file(py_file_path);
 
         convert_py_to_bin(py_file_path);
