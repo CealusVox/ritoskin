@@ -1,9 +1,4 @@
-src/ritoskin_extractor/process_champions
-src/ritoskin_extractor/output
-src/resources/bin
-src/resources/cslol
+src/resources/*
 .vscode
-src/dev/*.exe
-src/dev/output
-src/dev/ritoskin.cpp
-src/resources/__pycache__/*
+src/ritoskin.cpp
+src/ritoskin_extractor/*exe
