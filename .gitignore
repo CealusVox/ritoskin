@@ -2,3 +2,4 @@ src/resources/*
 .vscode
 src/ritoskin.cpp
 src/ritoskin_extractor/*exe
+src/src/ritoskin.cpp
