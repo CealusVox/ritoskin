@@ -1,289 +1,233 @@
+import os
 import json
+import re
 import requests
+import subprocess
 import shutil
-import zipfile
 from pathlib import Path
 import logging
-from typing import List, Tuple, Set
-import io
+from zipfile import ZipFile
 
 # Set up logging
-log_file = "process_log.txt"
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file),
-        logging.StreamHandler()
-    ]
+    format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-class SkinOrganizer:
-    def __init__(self, source_dir: str, output_dir: str, cache_dir: str):
-        self.source_dir = Path(source_dir)
-        self.output_dir = Path(output_dir)
-        self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.champion_data = {}
-        self.unprocessed_files = set()
+class SkinExtractor:
+    def __init__(self):
+        self.script_dir = Path(__file__).parent.absolute() 
+        self.champions_dir = self.script_dir / "process_champions"
+        self.output_dir = self.script_dir / "output"
+        self.mod_tools_path = self.script_dir / "mod-tools.exe"
+        self.game_path = Path(r"C:\Riot Games\League of Legends\Game")
         
-    def get_champion_data(self, champion_id: str) -> dict:
-        """Get detailed champion data including skins and chromas."""
-        cache_file = self.cache_dir / f"{champion_id}.json"
+        # Ensure mod-tools.exe exists
+        if not self.mod_tools_path.exists():
+            raise FileNotFoundError(f"mod-tools.exe not found at: {self.mod_tools_path}")
         
-        # Check if the data is already cached
-        if cache_file.exists():
-            with open(cache_file, 'r') as f:
-                return json.load(f)
-        
-        # If not cached, request from API
-        url = f"https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champions/{champion_id}.json"
+        # Create output directory
+        self.output_dir.mkdir(exist_ok=True)
+
+    def get_champion_output_dir(self, champion_id):
+        """Create and return champion-specific output directory."""
+        champion_dir = self.output_dir / champion_id
+        champion_dir.mkdir(exist_ok=True)
+        return champion_dir
+
+    @staticmethod
+    def sanitize_filename(filename):
+        """Sanitize filename to remove invalid characters."""
+        return re.sub(r'[<>:"/\\|?*]', '', filename).strip()
+
+    def zip_skin_folder(self, folder_path, skin_id, champion_id):
+        """
+        Zip the skin folder and delete the original folder.
+        Places the zip in the champion-specific output directory.
+        Returns the path to the created zip file.
+        """
+        try:
+            folder_path = Path(folder_path)
+            # Get champion-specific output directory
+            champion_output_dir = self.get_champion_output_dir(champion_id)
+            zip_path = champion_output_dir / f"{skin_id}.fantome"
+            
+            # Remove existing zip if it exists
+            if zip_path.exists():
+                zip_path.unlink()
+            
+            # Create the zip file
+            with ZipFile(zip_path, 'w') as zipf:
+                # Walk through the directory
+                for root, dirs, files in os.walk(folder_path):
+                    for file in files:
+                        # Get the full path of the file
+                        file_path = Path(root) / file
+                        # Get the relative path for the archive
+                        arcname = file_path.relative_to(folder_path)
+                        # Add file to the zip
+                        zipf.write(file_path, arcname)
+            
+            # Delete the original folder
+            shutil.rmtree(folder_path)
+            
+            logger.info(f"Created zip file: {zip_path}")
+            return zip_path
+            
+        except Exception as e:
+            logger.error(f"Error creating zip file: {e}")
+            raise
+
+    def download_champion_data(self):
+        """Download all champion data from Data Dragon."""
+        url = "https://ddragon.leagueoflegends.com/cdn/14.22.1/data/en_US/champion.json"
         try:
             response = requests.get(url)
             response.raise_for_status()
-            data = response.json()
-            
-            # Save the data to cache
-            with open(cache_file, 'w') as f:
-                json.dump(data, f)
-            
-            return data
+            return response.json()
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error getting champion data for ID {champion_id}: {e}")
+            logger.error(f"Error downloading champion data: {e}")
             return None
 
-    def get_chroma_preview_url(self, champion_id: str, chroma_id: str) -> str:
-        """Get the URL for a chroma preview image."""
-        return f"https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-chroma-images/{champion_id}/{chroma_id}.png"
-    def modify_zip_info_json(self, zip_path: Path, new_name: str) -> bool:
-        """Modify the info.json inside the ZIP file to update the Name parameter."""
-        temp_path = zip_path.with_suffix('.temp')
-        
-        try:
-            with zipfile.ZipFile(zip_path, 'r') as zip_read:
-                with zipfile.ZipFile(temp_path, 'w') as zip_write:
-                    for item in zip_read.infolist():
-                        data = zip_read.read(item.filename)
-                        
-                        if item.filename.endswith('META/info.json'):
-                            # Modify JSON content
-                            json_data = json.loads(data.decode('utf-8'))
-                            json_data['Name'] = new_name
-                            modified_data = json.dumps(json_data, indent=2).encode('utf-8')
-                            
-                            # Create new ZipInfo to preserve metadata
-                            new_info = zipfile.ZipInfo(item.filename)
-                            new_info.date_time = item.date_time
-                            new_info.compress_type = item.compress_type
-                            
-                            zip_write.writestr(new_info, modified_data)
-                        else:
-                            zip_write.writestr(item, data)
-            
-            # Replace original with modified file
-            zip_path.unlink()
-            temp_path.rename(zip_path)
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error modifying ZIP {zip_path}: {e}")
-            if temp_path.exists():
-                temp_path.unlink()
-            return False
-    def create_chroma_readme(self, champion_dir: Path, champion_id: str, skin_name: str, chromas: List[dict]):
-        """Create README.md file with chroma previews using direct CDN links."""
-        chroma_dir = champion_dir / "chromas" / skin_name
-        chroma_dir.mkdir(parents=True, exist_ok=True)
-        readme_path = chroma_dir / "README.md"
-        
-        content = [
-            f"# {skin_name} Chromas\n",  # Single newline after title
-            "| Preview | Chroma ID |",
-            "|---------|-----------|"
-        ]
-        
-        # Add chroma rows without extra newlines
-        for chroma in chromas:
-            chroma_id = str(chroma['id'])
-            image_url = self.get_chroma_preview_url(champion_id, chroma_id)
-            content.append(f"| ![{chroma_id}]({image_url}) | {chroma_id} |")
-        
-        # Join with single newlines
-        readme_content = '\n'.join(content)
-        readme_path.write_text(readme_content)
-        logger.info(f"Created README for {skin_name} chromas")
+    def find_data_folder(self, base_path):
+        """Find the data folder in the given path."""
+        data_path = Path(base_path)
+        for path in data_path.rglob('data'):
+            if path.is_dir():
+                return path
+        return None
 
-    def sanitize_filename(self, filename: str) -> str:
-        """Sanitize filename to remove invalid characters"""
-        
-        # Remove other invalid characters for Windows filenames
-        invalid_chars = '<>:"/\\|?*'
-        
-        for char in invalid_chars:
-            filename = filename.replace(char, ' ')
-        
-        # Remove multiple spaces and trim
-        while '  ' in filename:
-            filename = filename.replace('  ', ' ')
-        return filename.strip()
-
-    def process_champion_folder(self, champion_folder: Path) -> Tuple[bool, Set[Path]]:
-        champion_id = champion_folder.name
-        unprocessed_files = set()
-        
-        # Index all available files
-        available_files = {
-            int(f.stem): {
-                'path': f,
-                'processed': False,
-                'reason': None
-            } for f in champion_folder.glob("*.fantome")
-            if f.stem.isdigit()
+    def create_info_json(self, dst_path, skin_id):
+        """Create info.json file for the skin."""
+        info = {
+            "Author": "Kobzar and Nylish",
+            "Description": "Imported using RitoSkin",
+            "Name": f"Skin {skin_id}",
+            "Version": "1.0.0"
         }
         
-        if not available_files:
-            logger.warning(f"No .fantome files found in {champion_folder}")
-            return True, unprocessed_files
-    
-        # Get champion data
-        champion_data = self.get_champion_data(champion_id)
-        if not champion_data or 'skins' not in champion_data:
-            reason = "Invalid or missing champion data"
-            logger.error(f"{reason} for champion ID {champion_id}")
-            unprocessed_files.update(f['path'] for f in available_files.values())
-            return False, unprocessed_files
-    
-        champion_name = champion_data.get('name', champion_id)
-        logger.info(f"\nProcessing champion: {champion_name} (ID: {champion_id})")
-    
-        # Create mapping using actual skin/chroma IDs
-        expected_files = {}
-        skin_chromas = {}  # Track chromas for each skin
+        meta_folder = Path(dst_path) / "META"
+        meta_folder.mkdir(exist_ok=True)
         
-        for skin in champion_data['skins']:
-            skin_id = str(skin['id'])
-            skin_num = int(skin_id[-3:]) if len(skin_id) >= 3 else int(skin_id)
-            skin_name = self.sanitize_filename(skin['name'])
-            
-            expected_files[skin_num] = {
-                'type': 'skin',
-                'name': skin_name,
-                'id': skin_id
-            }
-            
-            # Initialize chromas list for this skin
-            if 'chromas' in skin:
-                skin_chromas[skin_name] = skin['chromas']
-                for chroma in skin['chromas']:
-                    chroma_id = str(chroma['id'])
-                    chroma_num = int(chroma_id[-3:]) if len(chroma_id) >= 3 else int(chroma_id)
-                    
-                    expected_files[chroma_num] = {
-                        'type': 'chroma',
-                        'skin_name': skin_name,
-                        'chroma_id': chroma_id
-                    }
-    
-        # Process files
-        champion_dir = self.output_dir / self.sanitize_filename(champion_name)
-        champion_dir.mkdir(parents=True, exist_ok=True)
-        (champion_dir / "chromas").mkdir(exist_ok=True)
+        with open(meta_folder / "info.json", "w") as f:
+            json.dump(info, f)
+        
+        logger.info(f"Created info.json for Skin {skin_id}")
 
-        processed_chromas = {}
-
-        # Compare and process
-        for file_num, file_data in available_files.items():
+    def compact_to_fantome(self, champion_folder, skin_id, champion_id):
+        """Convert champion skin files to fantome format and create zip."""
+        try:
+            # Prepare paths
+            champion_path = Path(champion_folder).parent
+            temp_skin_folder = self.output_dir / "temp" / str(skin_id)
+            temp_skin_folder.parent.mkdir(exist_ok=True)
+            temp_skin_folder.mkdir(exist_ok=True)
+            
+            # Create info.json
+            self.create_info_json(temp_skin_folder, skin_id)
+            
+            # Prepare command
+            command = [
+                str(self.mod_tools_path),
+                'addwad',
+                str(champion_path),
+                str(temp_skin_folder),
+                '--game:C:\\Riot Games\\League of Legends\\Game',
+                '--noTFT',
+                '--removeUNK'
+            ]
+            
+            logger.info(f"Executing command: {' '.join(command)}")
+            
+            # Execute command
+            # Change the working directory to where mod-tools.exe is located
+            original_dir = os.getcwd()
+            os.chdir(self.mod_tools_path.parent)
+            
             try:
-                if file_num not in expected_files:
-                    file_data['reason'] = f"No matching skin/chroma found for file number {file_num}"
-                    continue
+                result = subprocess.run(
+                    command,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                logger.info(f"Command output: {result.stdout}")
+            finally:
+                # Change back to the original directory
+                os.chdir(original_dir)
+            
+            # Create zip file in champion-specific directory and delete original folder
+            zip_path = self.zip_skin_folder(temp_skin_folder, skin_id, champion_id)
+            logger.info(f"Successfully created skin package: {zip_path}")
+            
+            # Clean up temp directory if it's empty
+            temp_dir = self.output_dir / "temp"
+            if temp_dir.exists() and not any(temp_dir.iterdir()):
+                temp_dir.rmdir()
+            
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error executing mod-tools: {e}")
+            logger.error(f"Standard output: {e.stdout}")
+            logger.error(f"Standard error: {e.stderr}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise
+
+    def process_champion_skins(self, champion_id, champion_name):
+        """Process all skins for a given champion."""
+        base_path = self.champions_dir / champion_name / "skins_extracted"
+        if not base_path.exists():
+            logger.error(f"Error: Folder for {champion_name} not found at {base_path}")
+            return
+
+        # Process each skin folder
+        for folder in base_path.iterdir():
+            if folder.is_dir() and folder.name.isdigit():
+                skin_id = folder.name
+                data_folder = self.find_data_folder(folder)
                 
-                expected = expected_files[file_num]
-                
-                if expected['type'] == 'skin':
-                    skin_name = expected['name']
-                    output_path = champion_dir / f"{skin_name}.zip"
-                    shutil.copy2(file_data['path'], output_path)
-                    
-                    # Modify the ZIP file to update skin name
-                    if self.modify_zip_info_json(output_path, skin_name):
-                        file_data['processed'] = True
-                        logger.info(f"Processed and renamed skin: {skin_name}")
-                    
-                elif expected['type'] == 'chroma':
-                    skin_name = expected['skin_name']
-                    chroma_id = expected['chroma_id']
-                    
-                    chroma_dir = champion_dir / "chromas" / skin_name
-                    chroma_dir.mkdir(parents=True, exist_ok=True)
-                    chroma_path = chroma_dir / f"{skin_name} {chroma_id}.zip"
-                    shutil.copy2(file_data['path'], chroma_path)
-                    
-                    # Modify the ZIP file to update chroma name
-                    if self.modify_zip_info_json(chroma_path, f"{skin_name} {chroma_id}"):
-                        file_data['processed'] = True
-                        if skin_name not in processed_chromas:
-                            processed_chromas[skin_name] = []
-                        processed_chromas[skin_name].append(chroma_id)
-                        logger.info(f"Processed and renamed chroma: {skin_name} {chroma_id}")
-                    
-            except Exception as e:
-                file_data['reason'] = f"Error during processing: {str(e)}"
-                logger.error(f"Error processing file {file_num}: {str(e)}", exc_info=True)
-    
-        # Create README files for chromas
-        for skin_name, chromas in skin_chromas.items():
-            # Only create README if we processed any chromas for this skin
-            if skin_name in processed_chromas and processed_chromas[skin_name]:
-                self.create_chroma_readme(champion_dir, champion_id, skin_name, chromas)
-    
-        # Log processing summary
-        logger.info(f"\nProcessing summary for champion {champion_name}:")
-        for file_num in sorted(available_files.keys()):
-            file_data = available_files[file_num]
-            if not file_data['processed']:
-                logger.warning(f"File {file_num} not processed: {file_data['reason']}")
-                unprocessed_files.add(file_data['path'])
-                
-        return True, unprocessed_files
+                if data_folder:
+                    logger.info(f"Processing skin ID: {skin_id}")
+                    self.compact_to_fantome(data_folder, skin_id, champion_id)
+                else:
+                    logger.warning(f"No data folder found in {folder.name}")
 
 def main():
-    # Replace these paths with your actual paths
-    source_dir = Path("output")
-    output_dir = Path("named_skins")
-    cache_dir = Path("cache")
-    
-    # Get all champion folders
-    champion_folders = [f for f in source_dir.iterdir() if f.is_dir() and f.name.isdigit()]
-    
-    logger.info(f"Starting to process all champions")
-    
-    total_processed = 0
-    all_unprocessed_files = set()
-    
-    organizer = SkinOrganizer(source_dir, output_dir, cache_dir)
-    
-    for folder in champion_folders:
-        try:
-            success, unprocessed_files = organizer.process_champion_folder(folder)
-            if success:
-                total_processed += 1
-            all_unprocessed_files.update(unprocessed_files)
-        except Exception as e:
-            logger.error(f"Error processing champion folder {folder}: {str(e)}")
-            # If there's an error processing the folder, add all its fantome files to unprocessed
-            all_unprocessed_files.update(f for f in folder.glob("*.fantome"))
-    
-    # Write unprocessed files to a text file
-    if all_unprocessed_files:
-        unprocessed_path = output_dir / "unprocessed_files.txt"
-        with open(unprocessed_path, 'w') as f:
-            for file_path in sorted(all_unprocessed_files):
-                f.write(f"{file_path}\n")
-        logger.info(f"Wrote list of {len(all_unprocessed_files)} unprocessed files to {unprocessed_path}")
-    
-    logger.info(f"Finished processing. Organized {total_processed} champions")
+    try:
+        extractor = SkinExtractor()
+        champion_data = extractor.download_champion_data()
+        
+        if not champion_data:
+            logger.error("Failed to download champion data!")
+            return
+        
+        champion_folders = [f for f in extractor.champions_dir.iterdir() if f.is_dir() and f.name != "output"]
+        
+        if not champion_folders:
+            logger.error("No champion folders found!")
+            return
+        
+        # Create a mapping of champion names to their IDs
+        champion_id_map = {champ_data['id']: champ_data['key'] for champ_data in champion_data['data'].values()}
+        
+        # Process each champion folder
+        for champion_folder in champion_folders:
+            champion_name = champion_folder.name
+            if champion_name in champion_id_map:
+                champion_id = champion_id_map[champion_name]
+                logger.info(f"Processing champion: {champion_name} (ID: {champion_id})")
+                extractor.process_champion_skins(champion_id, champion_name)
+            else:
+                logger.warning(f"Champion {champion_name} not found in champion data")
+        
+    except Exception as e:
+        logger.error(f"Script failed: {e}")
+        raise
 
 if __name__ == "__main__":
     main()
