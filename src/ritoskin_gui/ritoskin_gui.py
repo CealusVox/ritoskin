@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.scrape_process.finished.connect(self.handle_scrape_finished)
 
     def scrap_tex_to_dds(self):
-        script_path = os.path.join("../resources", "scrap_tex_to_dds.py")
+        script_path = os.path.join("../scripts", "scrap_tex_to_dds.py")
         if os.path.exists(script_path):
             self.terminal_output.append("Starting to scrape loading screen...")
             self.scrap_loading_screen_button.setEnabled(False)
