@@ -26,7 +26,7 @@ Additionally, RitoSkin includes an automated skin processing system. This featur
 
 To get started with RitoSkin, follow these steps:
 
-1. Download the latest release from our [Releases](https://github.com/yourusername/ritoskin/releases) page.
+1. Download the latest release from our [Releases](https://github.com/nylish/ritoskin/releases) page.
 2. Extract the contents to a directory of your choice.
 3. Ensure you have the necessary dependencies installed.
 
