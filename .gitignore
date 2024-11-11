@@ -3,3 +3,11 @@ src/ritoskin.cpp
 src/ritoskin_extractor/*exe
 src/resources/cslol/*.dll
 src/src/ritoskin.cpp
+
+#remove all folders inside src\ritoskin_extractor\process_champions, except the placeholder txt
+src/ritoskin_extractor/process_champions/*
+!src/ritoskin_extractor/process_champions/placeholder.txt
+src/ritoskin_extractor/output/*
+src/ritoskin_extractor/process_log.txt
+src/ritoskin_extractor/organized_skins/*
+src/ritoskin_extractor/cache/*

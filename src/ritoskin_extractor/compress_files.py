@@ -20,7 +20,8 @@ class SkinExtractor:
         self.script_dir = Path(__file__).parent.absolute() 
         self.champions_dir = self.script_dir / "process_champions"
         self.output_dir = self.script_dir / "output"
-        self.mod_tools_path = self.script_dir / "mod-tools.exe"
+        # mood tools path is in different parent directory
+        self.mod_tools_path = self.script_dir.parent / "resources" /  "cslol" / "mod-tools.exe"
         self.game_path = Path(r"C:\Riot Games\League of Legends\Game")
         
         # Ensure mod-tools.exe exists
