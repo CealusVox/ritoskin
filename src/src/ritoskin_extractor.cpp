@@ -57,7 +57,7 @@ void convert_bin_to_py(const fs::path& file_path) {
     std::string command = RITOBIN_CLI_PATH + " \"" + file_path.string() + "\"";
     int result = std::system(command.c_str());
     if (result != 0) {
-        throw std::runtime_error("Error converting bin to py");
+        throw std::runtime_error("Error converting bin to py!! Check RitoBin.");
     }
 }
 
@@ -98,7 +98,7 @@ void convert_py_to_bin(const fs::path& file_path) {
     std::string command = RITOBIN_CLI_PATH + " \"" + file_path.string() + "\"";
     int result = std::system(command.c_str());
     if (result != 0) {
-        throw std::runtime_error("Error converting py to bin");
+        throw std::runtime_error("Error converting py to bin!! Check RitoBin.");
     }
 }
 
@@ -207,6 +207,21 @@ void process_champion_folder(const fs::path& champion_folder) {
 
 int main() {
     try {
+        std::cout << "!!Before continue!!\n";
+        std::cout << "Do you want to update hashes(one-time, highly recommended) before processing? (y/n): ";
+        char choice;
+        std::cin >> choice;
+
+        if (choice == 'y' || choice == 'Y') {
+            std::cout << "Running update_ritobin.py script...\n";
+            std::cout << "Receiving ritobin folder...\n";
+            int result = std::system("python ../scripts/update_ritobin.py");
+            if (result != 0) {
+                std::cerr << "Error running update_ritobin.py script.\n";
+                return 1;
+            }
+        }
+
         fs::path current_dir = fs::current_path();
         fs::path champions_folder = current_dir / "process_champions";
 
@@ -228,16 +243,14 @@ int main() {
         }
         std::cout << "============================================\n";
         std::cout << "Process Complete!\n";
+        std::cout << "Everything went well? Congrats!\n";
+        std::cout << "RitoSkin Extractor - by Nylish\n";
+        std::cin.ignore();
+        std::cin.get();
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
-
-    std::cout << "Everything went well, congrats!\n";
-    std::cout << "RitoSkin Extractor - by Nylish\n";
-    std::cin.ignore();
-    std::cin.get();
-
     return 0;
 }

@@ -17,17 +17,16 @@ logger = logging.getLogger(__name__)
 
 class SkinExtractor:
     def __init__(self):
-        self.script_dir = Path(__file__).parent.absolute() 
+        self.script_dir = Path(__file__).parent.absolute()
         self.champions_dir = self.script_dir / "process_champions"
         self.output_dir = self.script_dir / "output"
-        # mood tools path is in different parent directory
         self.mod_tools_path = self.script_dir.parent / "resources" /  "cslol" / "mod-tools.exe"
         self.game_path = Path(r"C:\Riot Games\League of Legends\Game")
-        
+
         # Ensure mod-tools.exe exists
         if not self.mod_tools_path.exists():
             raise FileNotFoundError(f"mod-tools.exe not found at: {self.mod_tools_path}")
-        
+
         # Create output directory
         self.output_dir.mkdir(exist_ok=True)
 
@@ -53,11 +52,11 @@ class SkinExtractor:
             # Get champion-specific output directory
             champion_output_dir = self.get_champion_output_dir(champion_id)
             zip_path = champion_output_dir / f"{skin_id}.fantome"
-            
+
             # Remove existing zip if it exists
             if zip_path.exists():
                 zip_path.unlink()
-            
+
             # Create the zip file
             with ZipFile(zip_path, 'w') as zipf:
                 # Walk through the directory
@@ -69,13 +68,13 @@ class SkinExtractor:
                         arcname = file_path.relative_to(folder_path)
                         # Add file to the zip
                         zipf.write(file_path, arcname)
-            
+
             # Delete the original folder
             shutil.rmtree(folder_path)
-            
+
             logger.info(f"Created zip file: {zip_path}")
             return zip_path
-            
+
         except Exception as e:
             logger.error(f"Error creating zip file: {e}")
             raise
@@ -107,13 +106,13 @@ class SkinExtractor:
             "Name": f"Skin {skin_id}",
             "Version": "1.0.0"
         }
-        
+
         meta_folder = Path(dst_path) / "META"
         meta_folder.mkdir(exist_ok=True)
-        
+
         with open(meta_folder / "info.json", "w") as f:
             json.dump(info, f)
-        
+
         logger.info(f"Created info.json for Skin {skin_id}")
 
     def compact_to_fantome(self, champion_folder, skin_id, champion_id):
@@ -124,28 +123,28 @@ class SkinExtractor:
             temp_skin_folder = self.output_dir / "temp" / str(skin_id)
             temp_skin_folder.parent.mkdir(exist_ok=True)
             temp_skin_folder.mkdir(exist_ok=True)
-            
+
             # Create info.json
             self.create_info_json(temp_skin_folder, skin_id)
-            
+
             # Prepare command
             command = [
                 str(self.mod_tools_path),
                 'addwad',
                 str(champion_path),
                 str(temp_skin_folder),
-                '--game:C:\\Riot Games\\League of Legends\\Game',
+                '--game:V:\\Riot Games\\League of Legends\\Game',
                 '--noTFT',
                 '--removeUNK'
             ]
-            
+
             logger.info(f"Executing command: {' '.join(command)}")
-            
+
             # Execute command
             # Change the working directory to where mod-tools.exe is located
             original_dir = os.getcwd()
             os.chdir(self.mod_tools_path.parent)
-            
+
             try:
                 result = subprocess.run(
                     command,
@@ -158,18 +157,18 @@ class SkinExtractor:
             finally:
                 # Change back to the original directory
                 os.chdir(original_dir)
-            
+
             # Create zip file in champion-specific directory and delete original folder
             zip_path = self.zip_skin_folder(temp_skin_folder, skin_id, champion_id)
             logger.info(f"Successfully created skin package: {zip_path}")
-            
+
             # Clean up temp directory if it's empty
             temp_dir = self.output_dir / "temp"
             if temp_dir.exists() and not any(temp_dir.iterdir()):
                 temp_dir.rmdir()
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             logger.error(f"Error executing mod-tools: {e}")
             logger.error(f"Standard output: {e.stdout}")
@@ -191,7 +190,7 @@ class SkinExtractor:
             if folder.is_dir() and folder.name.isdigit():
                 skin_id = folder.name
                 data_folder = self.find_data_folder(folder)
-                
+
                 if data_folder:
                     logger.info(f"Processing skin ID: {skin_id}")
                     self.compact_to_fantome(data_folder, skin_id, champion_id)
@@ -202,20 +201,20 @@ def main():
     try:
         extractor = SkinExtractor()
         champion_data = extractor.download_champion_data()
-        
+
         if not champion_data:
             logger.error("Failed to download champion data!")
             return
-        
+
         champion_folders = [f for f in extractor.champions_dir.iterdir() if f.is_dir() and f.name != "output"]
-        
+
         if not champion_folders:
             logger.error("No champion folders found!")
             return
-        
+
         # Create a mapping of champion names to their IDs
         champion_id_map = {champ_data['id']: champ_data['key'] for champ_data in champion_data['data'].values()}
-        
+
         # Process each champion folder
         for champion_folder in champion_folders:
             champion_name = champion_folder.name
@@ -225,7 +224,7 @@ def main():
                 extractor.process_champion_skins(champion_id, champion_name)
             else:
                 logger.warning(f"Champion {champion_name} not found in champion data")
-        
+
     except Exception as e:
         logger.error(f"Script failed: {e}")
         raise
