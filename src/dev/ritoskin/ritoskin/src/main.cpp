@@ -8,6 +8,11 @@
 #include <regex>
 #include <map>
 
+#include "ThreadPool.h"
+#include <mutex>
+
+std::mutex console_mutex;
+
 // Include platform-specific headers for setting binary mode on Windows
 #ifdef WIN32
 #include <fcntl.h>
@@ -45,9 +50,9 @@ std::vector<fs::path> find_related_folders(const fs::path& champion_folder) {
 
     // Map of champion names to their alternative folder name prefixes
     std::map<std::string, std::vector<std::string>> champion_alternative_names = {
-        // Place special cases here!
+        // Place special cases here if needed!!
         {"heimerdinger", {"heimert"}},
-        
+
     };
 
     // Prepare a list of prefixes to check for related folders
@@ -117,6 +122,7 @@ void modify_py_file(const fs::path& file_path) {
         fs::rename(file_path.string() + ".tmp", file_path); // Rename temporary file to original file
     } else {
         fs::remove(file_path.string() + ".tmp"); // Remove temporary file if no modifications were made
+        std::lock_guard<std::mutex> lock(console_mutex);
         std::cout << "!! Error: Outdated Hashes | Skin pattern obfuscated !! " << file_path << "\n";
     }
 }
@@ -128,9 +134,12 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         int file_skin_number = std::stoi(filename.substr(4, filename.find('.') - 4));
 
         if (file_skin_number != skin_number) {
-            std::cerr << "Warning: Mismatch in skin numbering for " << filename
-                      << ". File suggests " << file_skin_number
-                      << ", but processing as " << skin_number << std::endl;
+            {
+                std::lock_guard<std::mutex> lock(console_mutex);
+                std::cerr << "Warning: Mismatch in skin numbering for " << filename
+                          << ". File suggests " << file_skin_number
+                          << ", but processing as " << skin_number << std::endl;
+            }
         }
 
         // Read bin file
@@ -139,7 +148,10 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         std::vector<char> bin_data((std::istreambuf_iterator<char>(bin_file)), std::istreambuf_iterator<char>());
         bin_file.close();
 
-        std::cout << "Read bin file: " << bin_file_path << " (" << bin_data.size() << " bytes)\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "Read bin file: " << bin_file_path << " (" << bin_data.size() << " bytes)\n";
+        }
 
         auto format = DynamicFormat::guess(std::string_view{bin_data.data(), bin_data.size()}, bin_file_path.string());
         if (!format) {
@@ -157,9 +169,15 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         }
 
         // Before unhashing
-        std::cout << "Unhashing bin data...\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "Unhashing bin data...\n";
+        }
         unhasher.unhash_bin(bin);
-        std::cout << "Unhashing completed.\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "Unhashing completed.\n";
+        }
 
         // Write py file using the output format
         std::vector<char> py_data;
@@ -173,9 +191,12 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         py_file.write(py_data.data(), py_data.size());
         py_file.close();
 
-        std::cout << "Wrote py file: " << py_file_path << " (" << py_data.size() << " bytes)\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "Wrote py file: " << py_file_path << " (" << py_data.size() << " bytes)\n";
+            std::cout << "\n" << "Processing skin " << skin_number << " ...\n";
+        }
 
-        std::cout << "\n" << "Processing skin " << skin_number << " ...\n";
         modify_py_file(py_file_path);
 
         // Get the binary format for writing
@@ -208,7 +229,10 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
         new_bin_file.write(new_bin_data.data(), new_bin_data.size());
         new_bin_file.close();
 
-        std::cout << "Wrote new bin file: " << bin_file_path << " (" << new_bin_data.size() << " bytes)\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "Wrote new bin file: " << bin_file_path << " (" << new_bin_data.size() << " bytes)\n";
+        }
 
         std::string champion_name = bin_file_path.parent_path().parent_path().filename().string();
         std::string main_champion_name = extracted_skins_folder.parent_path().filename().string();
@@ -219,13 +243,19 @@ void process_bin_file(const fs::path& bin_file_path, const fs::path& extracted_s
 
         fs::path new_bin_file_path = new_folder_structure / "skin0.bin";
         fs::rename(bin_file_path, new_bin_file_path);
-        std::cout << "File renamed & moved to " << new_bin_file_path << "\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cout << "File renamed & moved to " << new_bin_file_path << "\n";
+        }
 
-        // Debug purposes | verify regex pattern | unhasher | bin | py | new_bin
-        // fs::remove(py_file_path);
+        // For debug purposes comment | verify regex pattern | unhasher | bin | py | new_bin
+        fs::remove(py_file_path);
 
     } catch (const std::exception& e) {
-        std::cerr << "Error processing file: " << e.what() << "\n";
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            std::cerr << "Error processing file: " << e.what() << "\n";
+        }
     }
 }
 
@@ -281,12 +311,32 @@ void process_champion_folder(const fs::path& champion_folder, BinUnhasher& unhas
         std::cout << "  Skin " << number << ": " << paths.size() << " files\n";
     }
 
+    // Determine the number of threads to use
+    size_t num_threads = std::thread::hardware_concurrency();
+    if (num_threads == 0) num_threads = 4; // Fallback to 4 threads if hardware_concurrency can't determine
+    ThreadPool pool(num_threads);
+
+    // Vector to hold futures
+    std::vector<std::future<void>> results;
+
     for (const auto& [number, paths] : skin_map) {
         for (const auto& path : paths) {
-            process_bin_file(path, extracted_skins_folder, number, unhasher);
+            // Enqueue tasks into the thread pool
+            results.emplace_back(
+                pool.enqueue([path, extracted_skins_folder, number, &unhasher]() {
+                    // Process skin file
+                    process_bin_file(path, extracted_skins_folder, number, unhasher);
+                })
+            );
         }
     }
 
+    // Wait for all tasks to complete
+    for (auto& result : results) {
+        result.get();
+    }
+
+    // Process related folders sequentially
     std::vector<fs::path> related_folders = find_related_folders(champion_folder);
     for (const auto& related_folder : related_folders) {
         process_related_folder(related_folder, extracted_skins_folder, champion_name, unhasher);
@@ -336,6 +386,7 @@ int main(int argc, char** argv) {
         std::cout << "Process Complete!\n";
         std::cout << "Everything went well? Congrats!\n";
         std::cout << "RitoSkin Extractor - by Nylish\n";
+        std::cout << "============================================\n";
         std::cin.ignore();
         std::cin.get();
 

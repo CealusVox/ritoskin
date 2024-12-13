@@ -8,5 +8,8 @@ if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+# Find and link Threads package (if needed)
+find_package(Threads REQUIRED)
+
 add_subdirectory(ritobin_lib)
 add_subdirectory(ritoskin)
