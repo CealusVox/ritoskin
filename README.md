@@ -1,7 +1,5 @@
 # RitoSkin
 
-![RitoSkin](assets/ritoskin_panel.jpg)
-
 Custom skins have become an integral part of the League of Legends community, allowing players to personalize their gaming experience.
 
 - Custom skins and skin hacks are prevalent in the community.
@@ -31,9 +29,6 @@ To get started with RitoSkin, follow these steps:
 3. Ensure you have the necessary dependencies installed.
 
 > [!IMPORTANT]
-> RitoSkin requires [Ritobin](https://github.com/moonshadow565/ritobin) to function correctly. After downloading Ritobin, place it in the `resources` folder of your RitoSkin location.
-
-> [!IMPORTANT]
 > RitoSkin requires `cslol-dll.dll` to function correctly. Please obtain this file in accordance with LeagueToolkit's licensing terms and place it in the `resources\cslol` folder of your RitoSkin installation.
 
 ### Why isn't `cslol-dll.dll` included in the resources folder?
@@ -45,20 +40,6 @@ The `cslol-dll.dll` is part of the cslol-patcher project, which is owned by Leag
 - [Update-ritobin-hashes](https://youtu.be/-zzso5CYZMY)
 
 RitoSkin relies on up-to-date hash lists to function optimally. To keep these hashes current, we recommend using the CommunityDragon Toolbox. Here's how to use it:
-
-First, install the toolbox using pip:
-
-```
-pip3 install cdtb
-```
-
-Once installed, you can fetch the latest hashes with this command:
-
-```
-cdtb fetch-hashes
-```
-
-By default, the hashes will be downloaded to `~/.local/share/cdragon` on Unix systems or `%LOCALAPPDATA%/cdragon` on Windows. If you prefer a custom location, you can specify it using the `CDTB_HASHES_DIR` or `CDRAGON_DATA` environment variables.
 
 ## Usage
 
@@ -72,7 +53,7 @@ Using RitoSkin involves few steps:
 
 ### Processing
 
-After preparing the files, execute `ritoskin_extractor.exe`.
+After preparing the files, execute `ritoskin.exe`.
 > Using RitoBin, this program goes inside each skin, convert it to `.py`, apply the necessary changes, convert it to `.bin` again and store inside `skins_extracted` inside of the champion folder.
 That's it. You'll have all fles needed inside of each skin folder. If you want to change the IDs to the skin name and compress to .fantome, you can run `index_output_names.py`. All
 compressed files will be available inside the `output/` folder
@@ -81,34 +62,9 @@ compressed files will be available inside the `output/` folder
 > To ensure smooth execution of the Python script, you may need to install some external libraries using `pip install <requirement name>`
 
 Finally, use a custom skin loader to apply your newly created or modified skin in-game.
-## Project Structure
-
-The RitoSkin project is organized as follows:
-
-```
-ritoskin/
-├── src/
-│   ├── ritoskin.cpp
-│   └── ritoskin_gui.cpp
-├── resources/
-│   ├── bin/
-│   ├── cslol/
-│       ├── cslol-dll.dll
-│       └── mod-tools.exe
-│   └── scripts/
-├── dev/
-└── README.md
-```
-
-The `src` directory contains the main application source code, including both the core functionality (`ritoskin.cpp`) and the graphical user interface (`ritoskin_gui.cpp`).
-
-In the `resources` folder, you'll find necessary files and scripts that support the project's functionality. This is also where you should place the Ritobin executable.
-
-The `dev` directory houses development-related files and partial source code, which may be of interest to contributors or advanced users looking to extend RitoSkin's capabilities.
-
 
 > [!WARNING]
-> Always ensure you're using the latest hash lists to avoid compatibility issues with recent game updates.
+> Always ensure you're using the latest hash lists to avoid compatibility issues with recent game updates !!
 
 People who are interested in contributing to the project can find more information in the `CONTRIBUTING.md` file.
 
