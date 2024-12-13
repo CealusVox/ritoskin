@@ -43,10 +43,31 @@ std::vector<fs::path> find_related_folders(const fs::path& champion_folder) {
     std::string champion_name = champion_folder.filename().string();
     fs::path parent_folder = champion_folder.parent_path();
 
+    // Map of champion names to their alternative folder name prefixes
+    std::map<std::string, std::vector<std::string>> champion_alternative_names = {
+        // Place special cases here!
+        {"heimerdinger", {"heimert"}},
+        
+    };
+
+    // Prepare a list of prefixes to check for related folders
+    std::vector<std::string> prefixes = { champion_name };
+    if (champion_alternative_names.find(champion_name) != champion_alternative_names.end()) {
+        prefixes.insert(prefixes.end(),
+                        champion_alternative_names[champion_name].begin(),
+                        champion_alternative_names[champion_name].end());
+    }
+
     for (const auto& entry : fs::directory_iterator(parent_folder)) {
-        // Check if the directory name starts with the champion name and is not the same as the champion folder
-        if (fs::is_directory(entry) && entry.path().filename().string().find(champion_name) == 0 && entry.path() != champion_folder) {
-            related_folders.push_back(entry.path());
+        if (fs::is_directory(entry)
+            && entry.path() != champion_folder) {
+            std::string entry_name = entry.path().filename().string();
+            for (const auto& prefix : prefixes) {
+                if (entry_name.find(prefix) == 0) {
+                    related_folders.push_back(entry.path());
+                    break; // Found a matching prefix, no need to check other prefixes
+                }
+            }
         }
     }
 
