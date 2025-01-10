@@ -13,6 +13,11 @@ To compile RitoSkin, you will need to run the following command inside `dev/rito
 - cmake ..
 - cmake --build .
 
+For release, you will need to run the following command inside `dev/ritoskin`:
+- mkdir build && cd build
+- cmake -DCMAKE_BUILD_TYPE=Release ..
+- cmake --build . --config Release
+
 ## Usage
 
 - Go into the build directory (`ritoskin/debug/ritoskin.exe`);

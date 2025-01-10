@@ -5,6 +5,7 @@ project(ritobin_lib LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Add lib to project
 add_library(ritobin_lib STATIC
     src/ritobin/bin_hash.hpp
     src/ritobin/bin_hash.cpp
@@ -29,8 +30,10 @@ add_library(ritobin_lib STATIC
     src/ritobin/bin_unhash.cpp
 )
 
+# Include directories
 target_include_directories(ritobin_lib PUBLIC src/)
 target_include_directories(ritobin_lib PRIVATE deps/)
+# Add resources files
 if (WIN32)
     target_sources(ritobin_lib INTERFACE ../res/utf8.manifest ../res/longpath.manifest)
 endif()
